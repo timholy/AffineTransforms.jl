@@ -14,7 +14,7 @@ before_install:
   - sudo apt-get install libpcre3-dev julia -y
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-  - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.test("AffineTransforms")'
+  - julia -e 'Pkg.init(); Pkg.clone(pwd())'
   - if [ $JULIAVERSION = "julianightlies" ]; then julia --code-coverage test/runtests.jl; fi
-  - if [ $JULIAVERSION = "juliarelease" ]; then julia tests/test.jl; fi
+  - if [ $JULIAVERSION = "juliarelease" ]; then julia test/runtests.jl; fi
   - if [ $JULIAVERSION = "julianightlies" ]; then julia -e 'Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
