@@ -2,6 +2,10 @@ module AffineTransforms
 
 import Base: *, \, eltype, ndims, scale, show
 
+if !isdefined(:AbstractVecOrMat)
+    typealias AbstractVecOrMat Union(AbstractVector, AbstractMatrix)
+end
+
 export
     # types
     AffineTransform,
