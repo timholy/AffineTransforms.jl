@@ -2,6 +2,16 @@ using Base.Test
 
 import AffineTransforms
 
+if VERSION.minor == 2
+    macro mytest_throws(extype, arg)
+        :(@test_throws $(esc(arg)))
+    end
+else
+    macro mytest_throws(extype, arg)
+        :(@test_throws $(esc(extype)) $(esc(arg)))
+    end
+end
+
 # Pure translations
 for nd = 1:4
     t1 = rand(nd)
@@ -11,7 +21,7 @@ for nd = 1:4
     tfm1 = AffineTransforms.AffineTransform(ident, t1)
     x = zeros(nd)
     @test AffineTransforms.tformfwd(tfm1, x) == t1
-    @test_throws DimensionMismatch AffineTransforms.tformfwd(tfm1, zeros(nd+1))
+    @mytest_throws DimensionMismatch AffineTransforms.tformfwd(tfm1, zeros(nd+1))
     @test AffineTransforms.tforminv(tfm1, x) == -t1
     x = rand(nd)
     @test AffineTransforms.tformfwd(tfm1, x) == x+t1
