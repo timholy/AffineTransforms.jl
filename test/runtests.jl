@@ -36,6 +36,14 @@ for nd = 1:4
     tfmP1 = tfm1*tfm2
     @test tfmP1.offset == t1+t2
     @test_approx_eq AffineTransforms.tformfwd(tfmP1, x) x+t2+t1
+
+    if 2 <= nd <= 3
+        # Tuple interface
+        r = AffineTransforms.tformfwd(tfm1, x...)
+        @test [r...] == tfm1*x
+        r = AffineTransforms.tforminv(tfm1, x...)
+        @test [r...] == tfm1\x
+    end
 end
 
 # Pure rotations
@@ -62,6 +70,10 @@ x = rand(2)
 @test_approx_eq tfm1\(tfm2*x)  x
 @test_approx_eq (tfm1\tfm2)*x  x
 @test_approx_eq (tfm1*tfm1*tfm1*tfm1)*x  x
+r = AffineTransforms.tformfwd(tfm1, x...)
+@test [r...] == tfm1*x
+r = AffineTransforms.tforminv(tfm1, x...)
+@test [r...] == tfm1\x
 
 # 3d
 uaxis = rand(3); uaxis = uaxis/norm(uaxis)
@@ -75,6 +87,10 @@ xperp = x - xparallel
 @test_approx_eq tfm1\(tfm2*x)  x
 @test_approx_eq (tfm1\tfm2)*x  x
 @test_approx_eq (tfm1*tfm1*tfm1*tfm1)*x  x
+r = AffineTransforms.tformfwd(tfm1, x...)
+@test [r...] == tfm1*x
+r = AffineTransforms.tforminv(tfm1, x...)
+@test [r...] == tfm1\x
 
 # random transformations
 for nd = 1:4
@@ -90,6 +106,12 @@ for nd = 1:4
     y = tfm*x
     @test_approx_eq scale(s, tfm)*x  s.*y
     @test_approx_eq scale(tfm, s)*x  tfm*(s.*x)
+    if 2 <= nd <= 3
+        r = AffineTransforms.tformfwd(tfm, x...)
+        @test [r...] == tfm*x
+        r = AffineTransforms.tforminv(tfm, x...)
+        @test [r...] == tfm\x
+    end
 end
 
 # Pure rotations in 2d and 3d
