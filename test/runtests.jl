@@ -132,3 +132,77 @@ for i = 1:100
     R = AffineTransforms.rotation3(rv)
     @test_approx_eq rv AffineTransforms.rotationparameters(R)
 end
+
+# Transformation of arrays
+using Interpolations, Images # Images for padarray
+import AffineTransforms: center
+
+padwith0(A) = padarray(A, [2,2], [2,2], "value", 0)
+
+for (IT,GT) in ((BSpline{Constant}, OnCell),
+                (BSpline{Linear}, OnGrid),
+                (BSpline{Quadratic{Flat}}, OnCell))
+    A = padwith0([1 1; 1 2])
+    itp = interpolate(A, IT, GT)
+    tfm = AffineTransforms.tformtranslate([1,0])
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 2; 0 0]
+    @test_approx_eq tA[3,3] 1
+    @test_approx_eq tA[3,4] 2
+    tfm = AffineTransforms.tformtranslate([0,1])
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 0; 2 0]
+    tfm = AffineTransforms.tformtranslate([-1,0])
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [0 0; 1 1]
+    tfm = AffineTransforms.tformtranslate([0,-1])
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [0 1; 0 1]
+
+    A = padwith0([2 1; 1 1])
+    itp = interpolate(A, IT, GT)
+    tfm = AffineTransforms.tformrotate(pi/2)
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 2; 1 1]
+    tfm = AffineTransforms.tformrotate(-pi/2)
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 1; 2 1]
+
+    # Check that getindex and transform yield the same results
+    A = rand(6,6)
+    itp = interpolate(A, IT, GT)
+    tfm = AffineTransforms.tformrotate(pi/7)*AffineTransforms.tformtranslate(rand(2))
+    tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+    dest = AffineTransforms.transform(tA)
+    tfm_recentered = AffineTransforms.AffineTransform(tfm.scalefwd, tfm.offset + center(A) - tfm.scalefwd*center(dest))
+    tA_recentered = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm_recentered)
+    for j = 1:size(dest,2), i = 1:size(dest,1)
+        val = tA_recentered[i,j]
+        @test isfinite(dest[i,j]) == isfinite(val)
+        if isfinite(val)
+            @test abs(val-dest[i,j]) < 1e-12
+        end
+    end
+    dest = AffineTransforms.transform(tA, origin_src=zeros(2), origin_dest=zeros(2))
+    for j = 1:size(dest,2), i = 1:size(dest,1)
+        val = tA[i,j]
+        @test isfinite(dest[i,j]) == isfinite(val)
+        if isfinite(val)
+            @test abs(val-dest[i,j]) < 1e-12
+        end
+    end
+end
+
+A = Float64[1 2 3 4; 5 6 7 8]
+tfm = AffineTransforms.tformeye(2)
+dest = zeros(2,2)
+
+itp = interpolate(A, BSpline{Linear}, OnGrid)
+tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+@test_approx_eq AffineTransforms.transform!(dest, tA) [2 3; 6 7]
+dest3 = zeros(3,3)
+@test_approx_eq AffineTransforms.transform!(dest3, tA) [NaN NaN NaN; 3.5 4.5 5.5; NaN NaN NaN]
+
+itp = interpolate(A, BSpline{Constant}, OnCell)
+tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
+@test AffineTransforms.transform!(dest, tA) == [2 3; 6 7]

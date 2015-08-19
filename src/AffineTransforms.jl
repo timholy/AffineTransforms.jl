@@ -3,6 +3,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 module AffineTransforms
 
 import Base: *, \, eltype, ndims, scale, show
+using Interpolations, Base.Cartesian
 
 if !isdefined(:AbstractVecOrMat)
     typealias AbstractVecOrMat Union(AbstractVector, AbstractMatrix)
@@ -11,6 +12,7 @@ end
 export
     # types
     AffineTransform,
+    TransformedArray,
     # functions
     rotation2,
     rotation3,
@@ -25,8 +27,11 @@ export
     tformrigid,
     tformrotate,
     tformscale,
-    tformtranslate
+    tformtranslate,
+    transform,
+    transform!
 
 include("transform.jl")
+include("tformedarrays.jl")
 
 end
