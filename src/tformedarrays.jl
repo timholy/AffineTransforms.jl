@@ -71,9 +71,9 @@ function transform!{S,T,N}(dest::AbstractArray{S,N},
     _transform!(dest, src, offset)
 end
 
-# For a FilledInterpolation, this is designed to (usually) avoid evaluating
+# For a FilledExtrapolation, this is designed to (usually) avoid evaluating
 # the interpolation unless it is in-bounds.  This often improves performance.
-@generated function _transform!{S,T,N,E<:FilledInterpolation}(
+@generated function _transform!{S,T,N,E<:FilledExtrapolation}(
                                 dest::AbstractArray{S,N},
                                 src::TransformedArray{T,N,E},
                                 offset)
