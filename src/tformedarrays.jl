@@ -94,6 +94,11 @@ end
 
 transform!(dest, src, a::AffineTransform; kwargs...) = transform!(dest, TransformedArray(src, a); kwargs...)
 
+@require Images begin
+    transform(A::Images.AbstractImage, a::AffineTransform; kwargs...) = Images.copyproperties(A, transform(Images.data(A), a; kwargs...))
+    transform!(dest, A::Images.AbstractImage, a::AffineTransform; kwargs...) = Images.copyproperties(A, transform!(dest, Images.data(A), a; kwargs...))
+end
+
 # For a FilledExtrapolation, this is designed to (usually) avoid evaluating
 # the interpolation unless it is in-bounds.  This often improves performance.
 @generated function _transform!{S,T,N,E<:FilledExtrapolation}(
