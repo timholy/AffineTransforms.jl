@@ -20,6 +20,17 @@ end
 TransformedArray{T,N}(etp::AbstractExtrapolation{T,N}, a::AffineTransform) =
     TransformedArray{T,N,typeof(etp),typeof(a)}(etp, a)
 
+function TransformedArray(A::AbstractInterpolation, a::AffineTransform)
+    etp = extrapolate(A, NaN)
+    TransformedArray(etp, a)
+end
+
+function TransformedArray(A::AbstractArray, a::AffineTransform)
+    itp = interpolate(A, BSpline{Linear}, OnGrid)
+    TransformedArray(itp, a)
+end
+
+
 Base.size(A::TransformedArray) = size(A.data)
 
 function Base.getindex{T}(A::TransformedArray{T,2}, i, j)
@@ -35,15 +46,19 @@ end
 Base.similar(A::TransformedArray, T=eltype(A), dims=size(A)) = Array(T, dims)
 
 """
-`transform(A; origin_dest=center(A), origin_src=center(A))` computes
-the value of the transformed array `A` over its entire domain.  Unlike
-`getindex`, by default the transformation is assumed to operate around
-the center of the input array, and output coordinates are referenced
-relative to the center of the output.
+`transform(A, tfm; origin_dest=center(A), origin_src=center(A)`
+computes the transformed `A` over its entire domain.  By default the
+transformation is assumed to operate around the center of the input
+array, and output coordinates are referenced relative to the center of
+the output.
 
-To obtain behavior equivalent to `getindex`, supply zero-vectors for
-both of them. Alternatively to make `getindex` behave as `transform`,
-offset the origin of the transform used to construct `A` by
+If `A` is a TransformedArray, then the syntax is just `transform(A;
+origin_dest=center(A), origin_src=center(A))`. This is different from
+the behavior of `A[:,:]`, which assumes the origin of coordinates to
+be all-zeros.  To obtain behavior equivalent to `getindex`, supply
+zero-vectors for both of them. Alternatively to make `getindex` behave
+as `transform`, offset the origin of the transform used to construct
+`A` by
 ```
 origin_src - tform.scalefwd*origin_dest
 ```
@@ -54,9 +69,15 @@ function transform(A::TransformedArray; kwargs...)
     dest
 end
 
+transform(A, a::AffineTransform; kwargs...) = transform(TransformedArray(A, a); kwargs...)
+
 """
-`transform!(dest, src; origin_dest=center(dest), origin_src=center(src))`
-is like `transform`, but using a pre-allocated output array `dest`.
+`transform!(dest, src, tfm; origin_dest=center(dest),
+origin_src=center(src))` is like `transform`, but using a
+pre-allocated output array `dest`.
+
+If `src` is already a TransformedArray, use `transform!(dest, src;
+kwargs...)`.
 """
 function transform!{S,T,N}(dest::AbstractArray{S,N},
                            src::TransformedArray{T,N};
@@ -70,6 +91,8 @@ function transform!{S,T,N}(dest::AbstractArray{S,N},
     offset = tform.offset - tform.scalefwd*origin_dest + origin_src
     _transform!(dest, src, offset)
 end
+
+transform!(dest, src, a::AffineTransform; kwargs...) = transform!(dest, TransformedArray(src, a); kwargs...)
 
 # For a FilledExtrapolation, this is designed to (usually) avoid evaluating
 # the interpolation unless it is in-bounds.  This often improves performance.
