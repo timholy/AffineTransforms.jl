@@ -188,9 +188,9 @@ tformeye(nd) = AffineTransform(eye(nd), zeros(nd))
 ### Rotations
 # Right-hand rotation around an axis (axis points towards viewer)
 
-rotation2(angle::Real) = [cos(angle) -sin(angle); sin(angle) cos(angle)]
+rotation2(angle) = [cos(angle) -sin(angle); sin(angle) cos(angle)]
 
-function tformrotate(angle::Real)
+function tformrotate(angle)
     A = rotation2(angle)
     AffineTransform(A, zeros(eltype(A),2))
 end
