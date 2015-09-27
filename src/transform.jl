@@ -61,14 +61,27 @@ function tforminv!(dest, a::AffineTransform, X::AbstractVecOrMat)
 end
 
 # Faster versions for particular dimensionalities (with vectors)
-function tforminv!{T}(v, a::AffineTransform{T,3}, x::AbstractVector)
-    length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
-    t = a.temp
-    o = a.offset
-    @inbounds t[1] = x[1]-o[1]
-    @inbounds t[2] = x[2]-o[2]
-    @inbounds t[3] = x[3]-o[3]
-    gemv3!(v, a.scaleinv, t)
+for VecType in (AbstractVector, CartesianIndex)
+    @eval begin
+        function tforminv!{T}(v, a::AffineTransform{T,3}, x::$VecType)
+            length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
+            t = a.temp
+            o = a.offset
+            @inbounds t[1] = x[1]-o[1]
+            @inbounds t[2] = x[2]-o[2]
+            @inbounds t[3] = x[3]-o[3]
+            gemv3!(v, a.scaleinv, t)
+        end
+        function tformfwd!{T}(x, a::AffineTransform{T,3}, v::$VecType)
+            length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
+            gemv3!(x, a.scalefwd, v)
+            o = a.offset
+            @inbounds x[1] += o[1]
+            @inbounds x[2] += o[2]
+            @inbounds x[3] += o[3]
+            x
+        end
+    end
 end
 
 function tforminv{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number)
@@ -77,16 +90,6 @@ function tforminv{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number
     @inbounds t2 = x2 - o[2]
     @inbounds t3 = x3 - o[3]
     gemv3(a.scaleinv, t1, t2, t3)
-end
-
-function tformfwd!{T}(x, a::AffineTransform{T,3}, v::AbstractVector)
-    length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
-    gemv3!(x, a.scalefwd, v)
-    o = a.offset
-    @inbounds x[1] += o[1]
-    @inbounds x[2] += o[2]
-    @inbounds x[3] += o[3]
-    x
 end
 
 function tformfwd{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number)
@@ -98,13 +101,25 @@ function tformfwd{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number
     r1, r2, r3
 end
 
-function tforminv!{T}(v, a::AffineTransform{T,2}, x::AbstractVector)
-    length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
-    t = a.temp
-    o = a.offset
-    @inbounds t[1] = x[1]-o[1]
-    @inbounds t[2] = x[2]-o[2]
-    gemv2!(v, a.scaleinv, t)
+for VecType in (AbstractVector, CartesianIndex)
+    @eval begin
+        function tforminv!{T}(v, a::AffineTransform{T,2}, x::$VecType)
+            length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
+            t = a.temp
+            o = a.offset
+            @inbounds t[1] = x[1]-o[1]
+            @inbounds t[2] = x[2]-o[2]
+            gemv2!(v, a.scaleinv, t)
+        end
+        function tformfwd!{T}(x, a::AffineTransform{T,2}, v::$VecType)
+            length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
+            gemv2!(x, a.scalefwd, v)
+            t = a.offset
+            @inbounds x[1] += t[1]
+            @inbounds x[2] += t[2]
+            x
+        end
+    end
 end
 
 function tforminv{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
@@ -112,15 +127,6 @@ function tforminv{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
     @inbounds t1 = x1 - o[1]
     @inbounds t2 = x2 - o[2]
     gemv2(a.scaleinv, t1, t2)
-end
-
-function tformfwd!{T}(x, a::AffineTransform{T,2}, v::AbstractVector)
-    length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
-    gemv2!(x, a.scalefwd, v)
-    t = a.offset
-    @inbounds x[1] += t[1]
-    @inbounds x[2] += t[2]
-    x
 end
 
 function tformfwd{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
