@@ -101,7 +101,7 @@ end
 
 # For a FilledExtrapolation, this is designed to (usually) avoid evaluating
 # the interpolation unless it is in-bounds.  This often improves performance.
-@generated function _transform!{S,T,N,E<:FilledExtrapolation}(
+@generated function _transform!{S,T,N,E<:Interpolations.FilledExtrapolation}(
                                 dest::AbstractArray{S,N},
                                 src::TransformedArray{T,N,E},
                                 offset)
@@ -113,10 +113,9 @@ end
     quote
         tform = src.tform
         data = src.data
-        fillvalue = data.fillvalue
         @nexprs $N d->(o_d = offset[d])
         @nexprs $N j->(@nexprs $N i->(A_i_j = tform.scalefwd[i,j]))
-        fill!(dest, fillvalue)
+        fill!(dest, data.fillvalue)
         $(sN...)
         @nloops($N,i,d->(d>1 ? (1:size(dest,d)) : (imin:imax)),
                 # The pre-expression chooses the range within each column that will be in-bounds
