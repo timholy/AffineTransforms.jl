@@ -26,7 +26,7 @@ function TransformedArray(A::AbstractInterpolation, a::AffineTransform)
 end
 
 function TransformedArray(A::AbstractArray, a::AffineTransform)
-    itp = interpolate(A, BSpline{Linear}, OnGrid)
+    itp = interpolate(A, BSpline(Linear()), OnGrid())
     TransformedArray(itp, a)
 end
 
