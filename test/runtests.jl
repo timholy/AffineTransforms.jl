@@ -139,9 +139,9 @@ import AffineTransforms: center
 
 padwith0(A) = padarray(A, [2,2], [2,2], "value", 0)
 
-for (IT,GT) in ((BSpline{Constant}, OnCell),
-                (BSpline{Linear}, OnGrid),
-                (BSpline{Quadratic{Flat}}, OnCell))
+for (IT,GT) in ((BSpline(Constant()), OnCell()),
+                (BSpline(Linear()), OnGrid()),
+                (BSpline(Quadratic(Flat())), OnCell()))
     A = padwith0([1 1; 1 2])
     itp = interpolate(A, IT, GT)
     tfm = AffineTransforms.tformtranslate([1,0])
@@ -213,12 +213,12 @@ A = Float64[1 2 3 4; 5 6 7 8]
 tfm = AffineTransforms.tformeye(2)
 dest = zeros(2,2)
 
-itp = interpolate(A, BSpline{Linear}, OnGrid)
+itp = interpolate(A, BSpline(Linear()), OnGrid())
 tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
 @test_approx_eq AffineTransforms.transform!(dest, tA) [2 3; 6 7]
 dest3 = zeros(3,3)
 @test_approx_eq AffineTransforms.transform!(dest3, tA) [NaN NaN NaN; 3.5 4.5 5.5; NaN NaN NaN]
 
-itp = interpolate(A, BSpline{Constant}, OnCell)
+itp = interpolate(A, BSpline(Constant()), OnCell())
 tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
 @test AffineTransforms.transform!(dest, tA) == [2 3; 6 7]
