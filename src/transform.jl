@@ -196,7 +196,7 @@ function tformrotate(angle)
 end
 
 # The following assumes uaxis is normalized
-function _rotation3(uaxis::Vector, angle::Real)
+function _rotation3(uaxis::Vector, angle)
     if length(uaxis) != 3
         error("3d rotations only")
     end
@@ -209,7 +209,7 @@ function _rotation3(uaxis::Vector, angle::Real)
          uz*ux*cm-uy*s    uz*uy*cm+ux*s      c+uz*uz*cm]
 end
 
-function rotation3{T}(axis::Vector{T}, angle::Real)
+function rotation3{T}(axis::Vector{T}, angle)
     n = norm(axis)
     axisn = n>0 ? axis/n : (tmp = zeros(T,length(axis)); tmp[1] = 1)
     _rotation3(axisn, angle)
@@ -258,7 +258,7 @@ tformtranslate(trans::Vector) = AffineTransform(eye(length(trans)), trans)
 
 tformscale(scale::Real, ndims::Int) = AffineTransform(scale*eye(typeof(scale),ndims), zeros(typeof(scale),ndims))
 
-function tformrotate(axis::Vector, angle::Real)
+function tformrotate(axis::Vector, angle)
     if length(axis) == 3
         return AffineTransform(rotation3(axis, angle), zeros(eltype(axis),3))
     else
