@@ -33,17 +33,17 @@ end
 
 Base.size(A::TransformedArray) = size(A.data)
 
-function Base.getindex{T}(A::TransformedArray{T,2}, i, j)
+function Base.getindex{T}(A::TransformedArray{T,2}, i::Number, j::Number)
     x, y = tformfwd(A.tform, i, j)
     A.data[x, y]
 end
 
-function Base.getindex{T}(A::TransformedArray{T,3}, i, j, k)
+function Base.getindex{T}(A::TransformedArray{T,3}, i::Number, j::Number, k::Number)
     x, y, z = tformfwd(A.tform, i, j, k)
     A.data[x, y, z]
 end
 
-Base.similar(A::TransformedArray, T=eltype(A), dims=size(A)) = Array(T, dims)
+Base.similar{T}(A::TransformedArray, ::Type{T}, dims::Dims) = Array(T, dims)
 
 """
 `transform(A, tfm; origin_dest=center(A), origin_src=center(A)`
