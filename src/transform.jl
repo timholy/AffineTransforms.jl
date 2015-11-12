@@ -192,7 +192,7 @@ rotation2(angle) = [cos(angle) -sin(angle); sin(angle) cos(angle)]
 
 function tformrotate(angle)
     A = rotation2(angle)
-    AffineTransform(A, zeros(eltype(A),2))
+    AffineTransform{eltype(A), 2}(A, zeros(eltype(A),2))
 end
 
 # The following assumes uaxis is normalized
