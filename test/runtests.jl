@@ -222,3 +222,10 @@ dest3 = zeros(3,3)
 itp = interpolate(A, BSpline(Constant()), OnCell())
 tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
 @test AffineTransforms.transform!(dest, tA) == [2 3; 6 7]
+
+# Transforms with non-real numbers
+using DualNumbers
+a = AffineTransforms.tformtranslate([0,dual(1,0)])
+A = reshape(1:9, 3, 3)
+At = AffineTransforms.transform(A, a)
+@test real(At[:,1:2]) == A[:,2:3]
