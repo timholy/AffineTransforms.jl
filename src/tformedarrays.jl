@@ -142,12 +142,12 @@ center(A::AbstractArray) = [(size(A,d)+1)/2 for d = 1:ndims(A)]
 #      1 <= coef*i+offset <= upper
 function irange(imin::Int, imax::Int, coef, offset, upper)
     const thresh = 10^4/typemax(Int)  # needed to avoid InexactError for results with abs() bigger than typemax
-    if real(coef) > thresh
-        return max(imin, floor(Int, real((1-offset)/coef))), min(imax, ceil(Int, real((upper-offset)/coef)))
-    elseif real(coef) < -thresh
-        return max(imin, floor(Int, real((upper-offset)/coef))), min(imax, ceil(Int, real((1-offset)/coef)))
+    if coef > thresh
+        return max(imin, floor(Int, (1-offset)/coef)), min(imax, ceil(Int, (upper-offset)/coef))
+    elseif coef < -thresh
+        return max(imin, floor(Int, (upper-offset)/coef)), min(imax, ceil(Int, (1-offset)/coef))
     else
-        if 1 <= real(offset) <= upper
+        if 1 <= offset <= upper
             return imin, imax
         else
             return 1, 0   # empty range

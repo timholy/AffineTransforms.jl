@@ -228,4 +228,4 @@ using DualNumbers
 a = AffineTransforms.tformtranslate([0,dual(1,0)])
 A = reshape(1:9, 3, 3)
 At = AffineTransforms.transform(A, a)
-@test real(At[:,1:2]) == A[:,2:3]
+@test At[:,1:2] == A[:,2:3]
