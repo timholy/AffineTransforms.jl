@@ -16,6 +16,10 @@ function AffineTransform(S, offset)
     T = promote_type(eltype(S),eltype(offset))
     AffineTransform{T,length(offset)}(convert(Matrix{T},S), convert(Vector{T},offset))
 end
+function AffineTransform{R}(S, offset1::R, offset2::R)
+    T = promote_type(eltype(S),R)
+    AffineTransform{T,2}(convert(Matrix{T},S), Vector{T}[offset1, offset2])
+end
 
 ndims{T,N}(tform::AffineTransform{T,N}) = N
 eltype{T}(tf::AffineTransform{T}) = T
@@ -274,11 +278,15 @@ function tformrotate(x::Vector)
     end
 end
 
+function tformrigid(angle::Real, shiftx, shifty)
+    AffineTransform(rotation2(angle), shiftx, shifty)
+end
+
 # The following is useful in optimization routines, which tend to work on parameter vectors
 function tformrigid(p::Vector)
     if length(p) == 3
         # 2d: [angle, shiftx, shifty]
-        return AffineTransform(rotation2(p[1]), p[2:3])
+        return tformrigid(p[1], p[2], p[3])
     elseif length(p) == 6
         # 3d: [axis, shift]
         return AffineTransform(rotation3(p[1:3]), p[4:6])
