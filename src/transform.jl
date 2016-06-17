@@ -32,8 +32,8 @@ scale(s::Vector, tf::AffineTransform) = AffineTransform(scale(s, tf.scalefwd), t
 *(a::AffineTransform, v::AbstractVecOrMat) = tformfwd(a, v)
 \(a::AffineTransform, x::AbstractVecOrMat) = tforminv(a, x)
 
-tformfwd{T}(a::AffineTransform{T}, x::AbstractVecOrMat) = tformfwd!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
-tforminv{T}(a::AffineTransform{T}, x::AbstractVecOrMat) = tforminv!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
+tformfwd{T}(a::AffineTransform{T}, x::AbstractVector) = tformfwd!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
+tforminv{T}(a::AffineTransform{T}, x::AbstractVector) = tforminv!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
 tformfwd{T}(a::AffineTransform{T}, X::AbstractMatrix) = tformfwd!(Array(typeof(one(T)*one(eltype(X))), size(X,1), size(X,2)), a, X)
 tforminv{T}(a::AffineTransform{T}, X::AbstractMatrix) = tforminv!(Array(typeof(one(T)*one(eltype(X))), size(X,1), size(X,2)), a, X)
 
