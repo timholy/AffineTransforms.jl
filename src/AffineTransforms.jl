@@ -9,6 +9,10 @@ if !isdefined(:AbstractVecOrMat)
     typealias AbstractVecOrMat Union(AbstractVector, AbstractMatrix)
 end
 
+if VERSION < v"0.5.0"
+    using Compat
+end
+
 export
     # types
     AffineTransform,

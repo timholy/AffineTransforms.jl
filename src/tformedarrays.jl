@@ -109,7 +109,7 @@ end
     # s stands for source-coordinates. The first "column," s_d_1, corresponds
     # to the actual interpolation position. The later columns simply cache
     # previous computations.
-    sN = ntuple(i->Expr(:(=), symbol(string("s_",i,"_$N")), Expr(:call, :+, symbol(string("A_",i,"_$N")), symbol(string("o_",i)))), N)
+    sN = ntuple(i->Expr(:(=), Symbol(string("s_",i,"_$N")), Expr(:call, :+, Symbol(string("A_",i,"_$N")), Symbol(string("o_",i)))), N)
     quote
         tform = src.tform
         data = src.data

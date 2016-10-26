@@ -137,7 +137,7 @@ end
 using Interpolations, Images # Images for padarray
 import AffineTransforms: center
 
-padwith0(A) = padarray(A, [2,2], [2,2], "value", 0)
+padwith0(A) = parent(padarray(A, [2,2], [2,2], "value", 0))
 
 for (IT,GT) in ((BSpline(Constant()), OnCell()),
                 (BSpline(Linear()), OnGrid()),

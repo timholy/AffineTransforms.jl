@@ -26,8 +26,8 @@ function show(io::IO, tf::AffineTransform)
     println(io, "translation: ", tf.offset)
 end
 
-scale(tf::AffineTransform, s::Vector) = AffineTransform(scale(tf.scalefwd, s), tf.offset)
-scale(s::Vector, tf::AffineTransform) = AffineTransform(scale(s, tf.scalefwd), tf.offset.*s)
+scale(tf::AffineTransform, s::Vector) = AffineTransform(tf.scalefwd * Diagonal(s), tf.offset)
+scale(s::Vector, tf::AffineTransform) = AffineTransform(Diagonal(s) * tf.scalefwd, tf.offset.*s)
 
 *(a::AffineTransform, v::AbstractVecOrMat) = tformfwd(a, v)
 \(a::AffineTransform, x::AbstractVecOrMat) = tforminv(a, x)
