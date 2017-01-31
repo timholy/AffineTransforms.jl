@@ -1,8 +1,8 @@
-immutable AffineTransform{T,N}
+immutable AffineTransform{T, Tv, N}
     scalefwd::Matrix{T}
     scaleinv::Matrix{T}
-    offset::Vector{T}
-    temp::Vector{T}
+    offset::Vector{Tv}
+    temp::Vector{Tv}
 
     function AffineTransform(S::AbstractMatrix, t::AbstractVector)
         if size(S) != (N,N) || size(t) != (N,)
@@ -14,11 +14,17 @@ immutable AffineTransform{T,N}
 end
 function AffineTransform(S, offset)
     T = promote_type(eltype(S),eltype(offset))
-    AffineTransform{T,length(offset)}(convert(Matrix{T},S), convert(Vector{T},offset))
+    AffineTransform{T, T, length(offset)}(convert(Matrix{T},S), convert(Vector{T},offset))
+end
+function AffineTransform(::Type{Val{:units}}, S::AbstractMatrix, offset::AbstractVector)
+    const T = eltype(S)
+    const Tv = eltype(offset)
+    const N = length(offset)
+    AffineTransform{T, Tv, N}(convert(Matrix{T},S), convert(Vector{Tv},offset))
 end
 
-ndims{T,N}(tform::AffineTransform{T,N}) = N
-eltype{T}(tf::AffineTransform{T}) = T
+ndims{T,Tv,N}(tform::AffineTransform{T,Tv,N}) = N
+eltype{T,Tv}(tf::AffineTransform{T,Tv}) = Tv
 
 function show(io::IO, tf::AffineTransform)
     println(io, typeof(tf), ":")
@@ -32,10 +38,12 @@ scale(s::Vector, tf::AffineTransform) = AffineTransform(Diagonal(s) * tf.scalefw
 *(a::AffineTransform, v::AbstractVecOrMat) = tformfwd(a, v)
 \(a::AffineTransform, x::AbstractVecOrMat) = tforminv(a, x)
 
-tformfwd{T}(a::AffineTransform{T}, x::AbstractVector) = tformfwd!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
-tforminv{T}(a::AffineTransform{T}, x::AbstractVector) = tforminv!(Array(typeof(one(T)*one(eltype(x))), length(x)), a, x)
-tformfwd{T}(a::AffineTransform{T}, X::AbstractMatrix) = tformfwd!(Array(typeof(one(T)*one(eltype(X))), size(X,1), size(X,2)), a, X)
-tforminv{T}(a::AffineTransform{T}, X::AbstractMatrix) = tforminv!(Array(typeof(one(T)*one(eltype(X))), size(X,1), size(X,2)), a, X)
+function tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector)
+	tformfwd!(Array(Base.promote_eltype_op(*, a.scalefwd, x), length(x)), a, x)
+end
+tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), length(x)), a, x)
+tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tformfwd!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
+tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
 
 tformfwd(a::AffineTransform, v::AbstractMatrix) = a.scalefwd*v .+ a.offset
 tforminv(a::AffineTransform, x::AbstractMatrix) = a.scaleinv*(x .- a.offset)
@@ -63,7 +71,7 @@ end
 # Faster versions for particular dimensionalities (with vectors)
 for VecType in (AbstractVector, CartesianIndex)
     @eval begin
-        function tforminv!{T}(v, a::AffineTransform{T,3}, x::$VecType)
+        function tforminv!{T,Tv}(v, a::AffineTransform{T,Tv,3}, x::$VecType)
             length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
             t = a.temp
             o = a.offset
@@ -72,7 +80,7 @@ for VecType in (AbstractVector, CartesianIndex)
             @inbounds t[3] = x[3]-o[3]
             gemv3!(v, a.scaleinv, t)
         end
-        function tformfwd!{T}(x, a::AffineTransform{T,3}, v::$VecType)
+        function tformfwd!{T,Tv}(x, a::AffineTransform{T,Tv,3}, v::$VecType)
             length(x) == 3 || throw(DimensionMismatch("vector must be 3-dimensional"))
             gemv3!(x, a.scalefwd, v)
             o = a.offset
@@ -84,7 +92,7 @@ for VecType in (AbstractVector, CartesianIndex)
     end
 end
 
-function tforminv{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number)
+function tforminv{T,Tv}(a::AffineTransform{T,Tv,3}, x1::Number, x2::Number, x3::Number)
     o = a.offset
     @inbounds t1 = x1 - o[1]
     @inbounds t2 = x2 - o[2]
@@ -92,7 +100,7 @@ function tforminv{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number
     gemv3(a.scaleinv, t1, t2, t3)
 end
 
-function tformfwd{T}(a::AffineTransform{T,3}, x1::Number, x2::Number, x3::Number)
+function tformfwd{T,Tv}(a::AffineTransform{T,Tv,3}, x1::Number, x2::Number, x3::Number)
     t1, t2, t3 = gemv3(a.scalefwd, x1, x2, x3)
     o = a.offset
     @inbounds r1 = t1+o[1]
@@ -103,7 +111,7 @@ end
 
 for VecType in (AbstractVector, CartesianIndex)
     @eval begin
-        function tforminv!{T}(v, a::AffineTransform{T,2}, x::$VecType)
+        function tforminv!{T,Tv}(v, a::AffineTransform{T,Tv,2}, x::$VecType)
             length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
             t = a.temp
             o = a.offset
@@ -111,7 +119,7 @@ for VecType in (AbstractVector, CartesianIndex)
             @inbounds t[2] = x[2]-o[2]
             gemv2!(v, a.scaleinv, t)
         end
-        function tformfwd!{T}(x, a::AffineTransform{T,2}, v::$VecType)
+        function tformfwd!{T,Tv}(x, a::AffineTransform{T,Tv,2}, v::$VecType)
             length(x) == 2 || throw(DimensionMismatch("vector must be 2-dimensional"))
             gemv2!(x, a.scalefwd, v)
             t = a.offset
@@ -122,14 +130,14 @@ for VecType in (AbstractVector, CartesianIndex)
     end
 end
 
-function tforminv{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
+function tforminv{T,Tv}(a::AffineTransform{T,Tv,2}, x1::Number, x2::Number)
     o = a.offset
     @inbounds t1 = x1 - o[1]
     @inbounds t2 = x2 - o[2]
     gemv2(a.scaleinv, t1, t2)
 end
 
-function tformfwd{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
+function tformfwd{T,Tv}(a::AffineTransform{T,Tv,2}, x1::Number, x2::Number)
     t1, t2 = gemv2(a.scalefwd, x1, x2)
     o = a.offset
     @inbounds r1 = t1+o[1]
@@ -138,7 +146,7 @@ function tformfwd{T}(a::AffineTransform{T,2}, x1::Number, x2::Number)
 end
 
 # For just the 3rd coordinate (we sometimes only need that one)
-function tforminv3rd{T}(a::AffineTransform{T,3}, x::AbstractVector)
+function tforminv3rd{T,Tv}(a::AffineTransform{T,Tv,3}, x::AbstractVector)
     o = a.offset
     A = a.scaleinv
     A[3]*(x[1]-o[1]) + A[6]*(x[2]-o[2]) + A[9]*(x[3]-o[3])
@@ -182,7 +190,8 @@ function gemv2(A, x1::Number, x2::Number)
 end
 
 ### Identity transformation
-tformeye(T, nd) = AffineTransform(eye(T, nd), zeros(T, nd))
+tformeye(T, Tv, nd) = AffineTransform(eye(T, nd), zeros(Tv, nd))
+tformeye(T, nd) = tformeye(T, T, nd)
 tformeye(nd) = AffineTransform(eye(nd), zeros(nd))
 
 ### Rotations
@@ -192,7 +201,7 @@ rotation2(angle) = [cos(angle) -sin(angle); sin(angle) cos(angle)]
 
 function tformrotate(angle)
     A = rotation2(angle)
-    AffineTransform{eltype(A), 2}(A, zeros(eltype(A),2))
+    AffineTransform{eltype(A), eltype(A), 2}(A, zeros(eltype(A),2))
 end
 
 # The following assumes uaxis is normalized
