@@ -3,7 +3,6 @@ os:
   - linux
   - osx
 julia:
-  - 0.4
   - 0.5
   - nightly
 notifications:
@@ -13,4 +12,4 @@ before_install:
 script:
   - julia -e 'Pkg.clone(pwd()); Pkg.build("AffineTransforms"); Pkg.test("AffineTransforms"; coverage=true)'
 after_success:
-  - if [ $TRAVIS_JULIA_VERSION = "0.4" ]; then julia -e 'Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
+  - if [ $TRAVIS_JULIA_VERSION = "0.5" ]; then julia -e 'Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi

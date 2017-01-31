@@ -2,16 +2,6 @@ using Base.Test
 
 import AffineTransforms
 
-if VERSION.minor == 2
-    macro mytest_throws(extype, arg)
-        :(@test_throws $(esc(arg)))
-    end
-else
-    macro mytest_throws(extype, arg)
-        :(@test_throws $(esc(extype)) $(esc(arg)))
-    end
-end
-
 # Pure translations
 for nd = 1:4
     t1 = rand(nd)
@@ -21,7 +11,7 @@ for nd = 1:4
     tfm1 = AffineTransforms.AffineTransform(ident, t1)
     x = zeros(nd)
     @test AffineTransforms.tformfwd(tfm1, x) == t1
-    @mytest_throws DimensionMismatch AffineTransforms.tformfwd(tfm1, zeros(nd+1))
+    @test_throws DimensionMismatch AffineTransforms.tformfwd(tfm1, zeros(nd+1))
     @test AffineTransforms.tforminv(tfm1, x) == -t1
     x = rand(nd)
     @test AffineTransforms.tformfwd(tfm1, x) == x+t1
@@ -137,7 +127,7 @@ end
 using Interpolations, Images # Images for padarray
 import AffineTransforms: center
 
-padwith0(A) = parent(padarray(A, [2,2], [2,2], "value", 0))
+padwith0(A) = parent(padarray(A, Fill(0, (2,2))))  # take parent for "old style" indexing
 
 for (IT,GT) in ((BSpline(Constant()), OnCell()),
                 (BSpline(Linear()), OnGrid()),
