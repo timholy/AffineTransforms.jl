@@ -223,3 +223,9 @@ end
     At = AffineTransforms.transform(A, a)
     @test At[:,1:2] == A[:,2:3]
 end
+
+using Unitful: @u_str
+@testset "With separates types for linear transform and translation" begin
+    aff = AffineTransforms.AffineTransform([0 -1; 1 0], [2, 3]u"nm")
+    @test aff * ([1, 2]u"nm") == [0, 4]u"nm"
+end
