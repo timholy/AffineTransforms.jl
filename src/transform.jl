@@ -4,23 +4,17 @@ immutable AffineTransform{T, Tv, N}
     offset::Vector{Tv}
     temp::Vector{Tv}
 
-    function AffineTransform(S::AbstractMatrix, t::AbstractVector)
-        if size(S) != (N,N) || size(t) != (N,)
+    function AffineTransform(S::AbstractMatrix, iS::AbstractMatrix, t::AbstractVector)
+        if size(iS) != (N,N) || size(S) != (N,N) || size(t) != (N,)
             throw(DimensionMismatch("Inputs must be $N-dimensional"))
         end
         temp = Array(eltype(t), length(t))
-        new(S, inv(S), t, temp)
+        new(S, iS, t, temp)
     end
 end
 function AffineTransform(S, offset)
-    T = promote_type(eltype(S),eltype(offset))
-    AffineTransform{T, T, length(offset)}(convert(Matrix{T},S), convert(Vector{T},offset))
-end
-function AffineTransform(::Type{Val{:units}}, S::AbstractMatrix, offset::AbstractVector)
-    const T = eltype(S)
-    const Tv = eltype(offset)
-    const N = length(offset)
-    AffineTransform{T, Tv, N}(convert(Matrix{T},S), convert(Vector{Tv},offset))
+    A, iA = promote(S, inv(S))
+    AffineTransform{eltype(A), eltype(offset), length(offset)}(A, iA, offset)
 end
 
 ndims{T,Tv,N}(tform::AffineTransform{T,Tv,N}) = N
@@ -201,7 +195,7 @@ rotation2(angle) = [cos(angle) -sin(angle); sin(angle) cos(angle)]
 
 function tformrotate(angle)
     A = rotation2(angle)
-    AffineTransform{eltype(A), eltype(A), 2}(A, zeros(eltype(A),2))
+    AffineTransform(A, zeros(eltype(A),2))
 end
 
 # The following assumes uaxis is normalized
