@@ -130,7 +130,7 @@ end
     using Interpolations, Images # Images for padarray
     import AffineTransforms: center
 
-    padwith0(A) = parent(padarray(A, [2,2], [2,2], "value", 0))
+    padwith0(A) = parent(padarray(A, Fill(0, (2,2))))
 
     for (IT,GT) in ((BSpline(Constant()), OnCell()),
                     (BSpline(Linear()), OnGrid()),
@@ -202,7 +202,9 @@ end
         @test nbad < 3
     end
 
-    padwith0(A) = parent(padarray(A, Fill(0, (2,2))))  # take parent for "old style" indexing
+    A = Float64[1 2 3 4; 5 6 7 8]
+    tfm = AffineTransforms.tformeye(2)
+    dest = zeros(2,2)
 
     itp = interpolate(A, BSpline(Linear()), OnGrid())
     tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
