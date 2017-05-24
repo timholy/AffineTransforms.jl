@@ -4,12 +4,12 @@ immutable AffineTransform{T, Tv, N}
     offset::Vector{Tv}
     temp::Vector{Tv}
 
-    function AffineTransform(S::AbstractMatrix, iS::AbstractMatrix, t::AbstractVector)
+    function (::Type{AffineTransform{T,Tv,N}}){T,Tv,N}(S::AbstractMatrix, iS::AbstractMatrix, t::AbstractVector)
         if size(iS) != (N,N) || size(S) != (N,N) || size(t) != (N,)
             throw(DimensionMismatch("Inputs must be $N-dimensional"))
         end
-        temp = Array(eltype(t), length(t))
-        new(S, iS, t, temp)
+        temp = Vector{eltype(t)}(length(t))
+        new{T,Tv,N}(S, iS, t, temp)
     end
 end
 function AffineTransform(S, offset)
@@ -32,15 +32,21 @@ scale(s::Vector, tf::AffineTransform) = AffineTransform(Diagonal(s) * tf.scalefw
 *(a::AffineTransform, v::AbstractVecOrMat) = tformfwd(a, v)
 \(a::AffineTransform, x::AbstractVecOrMat) = tforminv(a, x)
 
-function tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector)
-	tformfwd!(Array(Base.promote_eltype_op(*, a.scalefwd, x), length(x)), a, x)
+if VERSION < v"0.6.0-dev.1996"
+    function tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector)
+        tformfwd!(Array(Base.promote_eltype_op(*, a.scalefwd, x), length(x)), a, x)
+    end
+    tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), length(x)), a, x)
+    tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tformfwd!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
+    tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
+else
+    function tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector)
+        tformfwd!(Vector{eltype(a.scalefwd*x)}(length(x)), a, x)
+    end
+    tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector) = tforminv!(Vector{eltype(a.scalefwd*x)}(length(x)), a, x)
+    tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tformfwd!(Matrix{eltype(a.scalefwd*x)}(size(x)), a, x)
+    tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tforminv!(Matrix{eltype(a.scalefwd*x)}(size(x)), a, x)
 end
-tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractVector) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), length(x)), a, x)
-tformfwd{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tformfwd!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
-tforminv{T,Tv}(a::AffineTransform{T,Tv}, x::AbstractMatrix) = tforminv!(Array(Base.promote_eltype_op((*), a.scalefwd, x), size(x,1), size(x,2)), a, x)
-
-tformfwd(a::AffineTransform, v::AbstractMatrix) = a.scalefwd*v .+ a.offset
-tforminv(a::AffineTransform, x::AbstractMatrix) = a.scaleinv*(x .- a.offset)
 
 # Implementation of a.scalefwd*X .+ a.offset
 function tformfwd!(dest, a::AffineTransform, X::AbstractVecOrMat)

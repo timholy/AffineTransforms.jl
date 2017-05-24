@@ -43,7 +43,7 @@ function Base.getindex{T}(A::TransformedArray{T,3}, i::Number, j::Number, k::Num
     A.data[x, y, z]
 end
 
-Base.similar{T}(A::TransformedArray, ::Type{T}, dims::Dims) = Array(T, dims)
+Base.similar{T}(A::TransformedArray, ::Type{T}, dims::Dims) = Array{T}(dims)
 
 """
 `transform(A, tfm; origin_dest=center(A), origin_src=center(A)`
@@ -64,7 +64,7 @@ origin_src - tform.scalefwd*origin_dest
 ```
 """
 function transform(A::TransformedArray; kwargs...)
-    dest = Array(promote_type(eltype(A.data), eltype(A.tform)), size(A))
+    dest = Array{promote_type(eltype(A.data), eltype(A.tform))}(size(A))
     transform!(dest, A; kwargs...)
     dest
 end
