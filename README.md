@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/timholy/AffineTransforms.jl.svg?branch=master)](https://travis-ci.org/timholy/AffineTransforms.jl)
 
-A package for working with affine transformations.
+A package for working with affine transformations. For new projects, I recommend [CoordinateTransformations](https://github.com/FugroRoames/CoordinateTransformations.jl) instead.
 
 ## Installation
 

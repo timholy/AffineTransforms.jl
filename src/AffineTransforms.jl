@@ -2,12 +2,14 @@ __precompile__(true)
 
 module AffineTransforms
 
-import Base: *, \, eltype, ndims, scale, show
-using Interpolations, Requires, Base.Cartesian
-
-if !isdefined(:AbstractVecOrMat)
-    typealias AbstractVecOrMat Union(AbstractVector, AbstractMatrix)
+import Base: *, \, eltype, ndims, show
+if isdefined(Base, :scale)
+    import Base.scale
+else
+    export scale
 end
+
+using Interpolations, Requires, Base.Cartesian
 
 export
     # types

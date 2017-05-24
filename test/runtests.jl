@@ -1,4 +1,5 @@
 using Base.Test
+using Compat
 
 import AffineTransforms
 
@@ -25,7 +26,7 @@ import AffineTransforms
     tfm2 = AffineTransforms.tformtranslate(t2)
     tfmP1 = tfm1*tfm2
     @test tfmP1.offset == t1+t2
-    @test_approx_eq AffineTransforms.tformfwd(tfmP1, x) x+t2+t1
+    @test AffineTransforms.tformfwd(tfmP1, x) ≈ x+t2+t1
 
     if 2 <= nd <= 3
         # Tuple interface
@@ -37,29 +38,29 @@ import AffineTransforms
 end
 
 @testset "Pure rotations" begin
-    @test_approx_eq AffineTransforms.tformrotate(0).scalefwd eye(2)
-    @test_approx_eq AffineTransforms.tformrotate(pi/2)*[1,0] [0,1]
-    @test_approx_eq AffineTransforms.tformrotate(pi/2).scalefwd [0 -1; 1 0]
-    @test_approx_eq AffineTransforms.tformrotate(pi)*[1,0] [-1,0]
-    @test_approx_eq AffineTransforms.tformrotate(3pi/2)*[1,0] [0,-1]
-    @test_approx_eq AffineTransforms.tformrotate([1,0,0],pi/2).scalefwd [1 0 0; 0 0 -1; 0 1 0]
-    @test_approx_eq AffineTransforms.tformrotate([1,0,0],pi/2)*[1,0,0] [1,0,0]
-    @test_approx_eq AffineTransforms.tformrotate([0,1,0],pi/2)*[1,0,0] [0,0,-1]
-    @test_approx_eq AffineTransforms.tformrotate([0,0,1],pi/2)*[1,0,0] [0,1,0]
+    @test AffineTransforms.tformrotate(0).scalefwd ≈ eye(2)
+    @test AffineTransforms.tformrotate(pi/2)*[1,0] ≈ [0,1]
+    @test AffineTransforms.tformrotate(pi/2).scalefwd ≈ [0 -1; 1 0]
+    @test AffineTransforms.tformrotate(pi)*[1,0] ≈ [-1,0]
+    @test AffineTransforms.tformrotate(3pi/2)*[1,0] ≈ [0,-1]
+    @test AffineTransforms.tformrotate([1,0,0],pi/2).scalefwd ≈ [1 0 0; 0 0 -1; 0 1 0]
+    @test AffineTransforms.tformrotate([1,0,0],pi/2)*[1,0,0] ≈ [1,0,0]
+    @test AffineTransforms.tformrotate([0,1,0],pi/2)*[1,0,0] ≈ [0,0,-1]
+    @test AffineTransforms.tformrotate([0,0,1],pi/2)*[1,0,0] ≈ [0,1,0]
     s2 = 1/sqrt(2)
-    @test_approx_eq AffineTransforms.tformrotate([0,1,0],pi/4).scalefwd [s2 0 s2; 0 1 0; -s2 0 s2]
-    @test_approx_eq AffineTransforms.tformrotate([0,0,1],pi/4).scalefwd [s2 -s2 0; s2 s2 0; 0 0 1]
+    @test AffineTransforms.tformrotate([0,1,0],pi/4).scalefwd ≈ [s2 0 s2; 0 1 0; -s2 0 s2]
+    @test AffineTransforms.tformrotate([0,0,1],pi/4).scalefwd ≈ [s2 -s2 0; s2 s2 0; 0 0 1]
 
     theta1 = pi/2
     @testset "> 2d" begin
         tfm1 = AffineTransforms.tformrotate(theta1)
         tfm2 = AffineTransforms.tformrotate(theta1)
         x = rand(2)
-        @test_approx_eq tfm1*(tfm2*x) -x
-        @test_approx_eq (tfm1*tfm2)*x -x
-        @test_approx_eq tfm1\(tfm2*x)  x
-        @test_approx_eq (tfm1\tfm2)*x  x
-        @test_approx_eq (tfm1*tfm1*tfm1*tfm1)*x  x
+        @test tfm1*(tfm2*x) ≈ -x
+        @test (tfm1*tfm2)*x ≈ -x
+        @test tfm1\(tfm2*x) ≈ x
+        @test (tfm1\tfm2)*x ≈ x
+        @test (tfm1*tfm1*tfm1*tfm1)*x ≈ x
         r = AffineTransforms.tformfwd(tfm1, x...)
         @test [r...] == tfm1*x
         r = AffineTransforms.tforminv(tfm1, x...)
@@ -73,11 +74,11 @@ end
         x = rand(3)
         xparallel = dot(x,uaxis)*uaxis
         xperp = x - xparallel
-        @test_approx_eq tfm1*(tfm2*x) xparallel-xperp
-        @test_approx_eq (tfm1*tfm2)*x xparallel-xperp
-        @test_approx_eq tfm1\(tfm2*x)  x
-        @test_approx_eq (tfm1\tfm2)*x  x
-        @test_approx_eq (tfm1*tfm1*tfm1*tfm1)*x  x
+        @test tfm1*(tfm2*x) ≈ xparallel-xperp
+        @test (tfm1*tfm2)*x ≈ xparallel-xperp
+        @test tfm1\(tfm2*x) ≈ x
+        @test (tfm1\tfm2)*x ≈ x
+        @test (tfm1*tfm1*tfm1*tfm1)*x ≈ x
         r = AffineTransforms.tformfwd(tfm1, x...)
         @test [r...] == tfm1*x
         r = AffineTransforms.tforminv(tfm1, x...)
@@ -90,14 +91,14 @@ end
     b = randn(nd)
     tfm = AffineTransforms.AffineTransform(A, b)
     x = rand(nd)
-    @test_approx_eq tfm*x A*x+b
-    @test_approx_eq tfm\x A\(x-b)
-    @test_approx_eq (tfm\tfm)*x x
+    @test tfm*x ≈ A*x+b
+    @test tfm\x ≈ A\(x-b)
+    @test (tfm\tfm)*x ≈ x
     # Scaling transformations
     s = rand(nd)
     y = tfm*x
-    @test_approx_eq scale(s, tfm)*x  s.*y
-    @test_approx_eq scale(tfm, s)*x  tfm*(s.*x)
+    @test AffineTransforms.scale(s, tfm)*x ≈ s.*y
+    @test AffineTransforms.scale(tfm, s)*x ≈ tfm*(s.*x)
     if 2 <= nd <= 3
         r = AffineTransforms.tformfwd(tfm, x...)
         @test [r...] == tfm*x
@@ -110,7 +111,7 @@ end
     for i = 1:20
         th = pi*(rand()-0.5)
         R = AffineTransforms.rotation2(th)
-        @test_approx_eq th AffineTransforms.rotationparameters(R)
+        @test th ≈ AffineTransforms.rotationparameters(R)[1]
     end
     for i = 1:100
         ax = randn(3)
@@ -122,7 +123,7 @@ end
         th = pi*rand()
         rv = th*ax
         R = AffineTransforms.rotation3(rv)
-        @test_approx_eq rv AffineTransforms.rotationparameters(R)
+        @test rv ≈ AffineTransforms.rotationparameters(R)
     end
 end
 
@@ -139,27 +140,27 @@ end
         itp = interpolate(A, IT, GT)
         tfm = AffineTransforms.tformtranslate([1,0])
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 2; 0 0]
-        @test_approx_eq tA[3,3] 1
-        @test_approx_eq tA[3,4] 2
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [1 2; 0 0]
+        @test tA[3,3] ≈ 1
+        @test tA[3,4] ≈ 2
         tfm = AffineTransforms.tformtranslate([0,1])
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 0; 2 0]
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [1 0; 2 0]
         tfm = AffineTransforms.tformtranslate([-1,0])
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [0 0; 1 1]
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [0 0; 1 1]
         tfm = AffineTransforms.tformtranslate([0,-1])
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [0 1; 0 1]
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [0 1; 0 1]
 
         A = padwith0([2 1; 1 1])
         itp = interpolate(A, IT, GT)
         tfm = AffineTransforms.tformrotate(pi/2)
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 2; 1 1]
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [1 2; 1 1]
         tfm = AffineTransforms.tformrotate(-pi/2)
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test_approx_eq AffineTransforms.transform(tA)[3:4,3:4] [1 1; 2 1]
+        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [1 1; 2 1]
 
         # Check that getindex and transform yield the same results
         A = rand(6,6)
@@ -208,9 +209,9 @@ end
 
     itp = interpolate(A, BSpline(Linear()), OnGrid())
     tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-    @test_approx_eq AffineTransforms.transform!(dest, tA) [2 3; 6 7]
+    @test AffineTransforms.transform!(dest, tA) ≈ [2 3; 6 7]
     dest3 = zeros(3,3)
-    @test_approx_eq AffineTransforms.transform!(dest3, tA) [NaN NaN NaN; 3.5 4.5 5.5; NaN NaN NaN]
+    @test all(Compat.isapprox.(AffineTransforms.transform!(dest3, tA), [NaN NaN NaN; 3.5 4.5 5.5; NaN NaN NaN], nans=true))
 
     itp = interpolate(A, BSpline(Constant()), OnCell())
     tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
@@ -229,3 +230,5 @@ using Unitful: @u_str
     aff = AffineTransforms.AffineTransform([0 -1; 1 0], [2, 3]u"nm")
     @test aff * ([1, 2]u"nm") == [0, 4]u"nm"
 end
+
+nothing
