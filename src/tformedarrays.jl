@@ -63,8 +63,11 @@ as `transform`, offset the origin of the transform used to construct
 origin_src - tform.scalefwd*origin_dest
 ```
 """
-function transform(A::TransformedArray; kwargs...)
-    dest = Array{promote_type(eltype(A.data), eltype(A.tform))}(size(A))
+function transform{_,N}(A::TransformedArray{_,N}; kwargs...)
+    y = A.tform * ones(Int, N)
+    yt = (y...)::NTuple{N,eltype(y)}
+    a = A.data[yt...]
+    dest = Array{typeof(a)}(size(A))
     transform!(dest, A; kwargs...)
     dest
 end
