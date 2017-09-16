@@ -140,7 +140,7 @@ end
         itp = interpolate(A, IT, GT)
         tfm = AffineTransforms.tformtranslate([1,0])
         tA = AffineTransforms.TransformedArray(extrapolate(itp, NaN), tfm)
-        @test AffineTransforms.transform(tA)[3:4,3:4] ≈ [1 2; 0 0]
+        @test @inferred(AffineTransforms.transform(tA))[3:4,3:4] ≈ [1 2; 0 0]
         @test tA[3,3] ≈ 1
         @test tA[3,4] ≈ 2
         tfm = AffineTransforms.tformtranslate([0,1])
